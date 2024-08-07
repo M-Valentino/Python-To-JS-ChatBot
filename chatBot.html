@@ -32,35 +32,45 @@
         }
 
         function vectorizeText(text) {
-            // Tokenize and vectorize the input text
             const tokens = tokenize(text);
             const tfidfVector = new Array(Object.keys(vectorizer.vocabulary).length).fill(0);
-            
-            // Compute TF-IDF vector
+            const tf = {};
+
+            tokens.forEach(token => {
+                if (vectorizer.vocabulary[token] !== undefined) {
+                    tf[token] = (tf[token] || 0) + 1;
+                }
+            });
+
             tokens.forEach(token => {
                 if (vectorizer.vocabulary[token] !== undefined) {
                     const index = vectorizer.vocabulary[token];
-                    tfidfVector[index] = 1; // Simplified: actual TF-IDF should be computed here
+                    const tfValue = tf[token] / tokens.length; // TF calculation
+                    const idfValue = vectorizer.idf[Object.keys(vectorizer.vocabulary).indexOf(token)] || 0;
+                    tfidfVector[index] = tfValue * idfValue;
                 }
             });
-            
+
             return tfidfVector;
         }
 
         function tokenize(text) {
-            // Basic tokenization (split by whitespace)
-            return text.toLowerCase().split(/\s+/);
+            return text.toLowerCase().match(/\b\w+\b/g) || [];
+        }
+
+        function sigmoid(z) {
+            return 1 / (1 + Math.exp(-z));
         }
 
         function predict(vectorizedInput) {
-            // Compute the dot product between the vectorized input and model coefficients
-            const dotProduct = model.coefficients.reduce((sum, coeff, i) => {
-                return sum + coeff.reduce((innerSum, value, j) => innerSum + (value * vectorizedInput[j] || 0), 0);
-            }, 0) + model.intercept[0];
+            const scores = model.coefficients.map(coeff => {
+                return coeff.reduce((sum, value, i) => sum + (value * (vectorizedInput[i] || 0)), 0) + model.intercept[0];
+            });
 
-            // Find the class with the highest score
-            const classIndex = dotProduct >= 0 ? 1 : 0; // Simplified decision rule for binary classification
-            return model.classes[classIndex];
+            const probabilities = scores.map(score => sigmoid(score));
+            const maxIndex = probabilities.indexOf(Math.max(...probabilities));
+
+            return model.classes[maxIndex];
         }
     </script>
 </body>
