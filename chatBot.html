@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+</head>
+<body>
+    <h1>Chatbot</h1>
+    <textarea id="userInput" rows="4" cols="50"></textarea><br>
+    <button onclick="getResponse()">Send</button>
+    <p id="response"></p>
+
+    <script>
+        let vectorizer = {};
+        let model = {};
+
+        // Load the vectorizer and model JSON data
+        fetch('vectorizer.json')
+            .then(response => response.json())
+            .then(data => vectorizer = data);
+
+        fetch('model.json')
+            .then(response => response.json())
+            .then(data => model = data);
+
+        function getResponse() {
+            const input = document.getElementById('userInput').value;
+            const vectorizedInput = vectorizeText(input);
+            const prediction = predict(vectorizedInput);
+            document.getElementById('response').innerText = prediction;
+        }
+
+        function vectorizeText(text) {
+            // Tokenize and vectorize the input text
+            const tokens = tokenize(text);
+            const tfidfVector = new Array(Object.keys(vectorizer.vocabulary).length).fill(0);
+            
+            // Compute TF-IDF vector
+            tokens.forEach(token => {
+                if (vectorizer.vocabulary[token] !== undefined) {
+                    const index = vectorizer.vocabulary[token];
+                    tfidfVector[index] = 1; // Simplified: actual TF-IDF should be computed here
+                }
+            });
+            
+            return tfidfVector;
+        }
+
+        function tokenize(text) {
+            // Basic tokenization (split by whitespace)
+            return text.toLowerCase().split(/\s+/);
+        }
+
+        function predict(vectorizedInput) {
+            // Compute the dot product between the vectorized input and model coefficients
+            const dotProduct = model.coefficients.reduce((sum, coeff, i) => {
+                return sum + coeff.reduce((innerSum, value, j) => innerSum + (value * vectorizedInput[j] || 0), 0);
+            }, 0) + model.intercept[0];
+
+            // Find the class with the highest score
+            const classIndex = dotProduct >= 0 ? 1 : 0; // Simplified decision rule for binary classification
+            return model.classes[classIndex];
+        }
+    </script>
+</body>
+</html>
