@@ -9,13 +9,12 @@
     <h1>Chatbot</h1>
     <textarea id="userInput" rows="4" cols="50"></textarea><br>
     <button onclick="getResponse()">Send</button>
-    <p id="response"></p>
+    <div id="chatLog"></div>
 
     <script>
         let vectorizer = {};
         let model = {};
 
-        // Load the vectorizer and model JSON data
         fetch('vectorizer.json')
             .then(response => response.json())
             .then(data => vectorizer = data);
@@ -26,9 +25,15 @@
 
         function getResponse() {
             const input = document.getElementById('userInput').value;
+            let chatP = document.createElement('p');
+            chatP.innerHTML = `<b>You:</b> ${input}`;
+            document.getElementById('chatLog').appendChild(chatP);
+
             const vectorizedInput = vectorizeText(input);
             const prediction = predict(vectorizedInput);
-            document.getElementById('response').innerText = prediction;
+            chatP = document.createElement('p');
+            chatP.innerHTML = `<b>Bot:</b> ${prediction}`;
+            document.getElementById('chatLog').appendChild(chatP);
         }
 
         function vectorizeText(text) {
